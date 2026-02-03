@@ -341,7 +341,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1242766761}
         m_TargetAssemblyTypeName: MonsterGenerator, Assembly-CSharp
-        m_MethodName: GenerateMonster
+        m_MethodName: generateAndSave
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

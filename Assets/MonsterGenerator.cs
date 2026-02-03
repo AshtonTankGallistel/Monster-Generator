@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -25,6 +26,13 @@ public class MonsterGenerator : MonoBehaviour
 
     [SerializeField] TMP_InputField statTotalInput;
 
+    public class monsterInfo
+    {
+        public string[] typing;
+        public int[] stats;
+        //public Dictionary<string, int> stats;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -37,7 +45,9 @@ public class MonsterGenerator : MonoBehaviour
         //    GameObject myTester = Instantiate(tester);
         //    myTester.transform.position = new Vector2(myRand,value) * 4;
         //}
-        GenerateMonster();
+        File.WriteAllText(Application.dataPath + "/bruh.txt", "huh?");
+        monsterInfo myNewMonster = GenerateMonster();
+        saveMonsterToJson(myNewMonster, "HelloMonster");
     }
 
     // Update is called once per frame
@@ -46,24 +56,85 @@ public class MonsterGenerator : MonoBehaviour
         
     }
 
-    public void GenerateMonster()
+    public monsterInfo GenerateMonster(bool exactTotal = true)
     {
         //STATS
         Dictionary<string, int> statLine = new Dictionary<string, int>();
 
-        int statAverage = statTotal / statList.Length;
 
-        //Our goal is to have a 'curve' for each of the stats, from 0 to 2 times the average, centering on 1.
-        int remainingStats = Mathf.FloorToInt(statAverage * 2 * randomHeavyCenter(UnityEngine.Random.value));
-
-        foreach (string stat in statList)
+        if (!exactTotal) //Not exact total
         {
-            //Get random value from 0 to 2xthe average
-            //if 0, set to 1
-            statLine[stat] = Math.Max(1,Mathf.FloorToInt(statAverage * 2 * randomHeavyCenter(UnityEngine.Random.value)));
-            //Debug.Log(statLine[stat]);
+            int statAverage = statTotal / statList.Length;
+            //Our goal is to have a 'curve' for each of the stats, from 0 to 2 times the average, centering on 1.
+            int remainingStats = Mathf.FloorToInt(statAverage * 2 * randomHeavyCenter(UnityEngine.Random.value));
+            foreach (string stat in statList)
+            {
+                //Get random value from 0 to 2xthe average
+                //if 0, set to 1
+                statLine[stat] = Math.Max(1, Mathf.FloorToInt(statAverage * 2 * randomHeavyCenter(UnityEngine.Random.value)));
+                //Debug.Log(statLine[stat]);
+            }
+            //Debug.Log(statLine);
         }
-        //Debug.Log(statLine);
+        else //Exact total
+        {
+            //all the stats are rolled independently, but the results are the ratios of the stats to one another. ie a roll of 0.1/0.5/0.9 with a total of 150 becomes 10/50/90
+
+            Dictionary<string, float> statStrength = new Dictionary<string, float>();
+            float totalValueAmount = 0;
+            foreach (string stat in statList)
+            {
+                //Get random value from 0 to 1, which will be used in comparison against eachother
+                statStrength[stat] = randomHeavyCenter(UnityEngine.Random.value);
+                //Add value to the totalAmount of value
+                totalValueAmount += statStrength[stat];
+            }
+            int currentTotalStats = 0;
+            foreach (string stat in statList)
+            {
+                //if 0, set to 1
+                statLine[stat] = Math.Max(1, Mathf.RoundToInt(statTotal * statStrength[stat] / totalValueAmount));
+                currentTotalStats += statLine[stat];
+            }
+            //This should result in a little over or under the exact total...
+            //If no 0, this value is usually -1 or 1, rarely 2.
+            print(statTotal - currentTotalStats);
+            if(statTotal - currentTotalStats != 0)
+            {
+                //In this case, find the lowest/highest value stat and add the value to it
+                int statDifference = statTotal - currentTotalStats;
+                if (statDifference > 0)
+                {
+                    string lowestStat = "";
+                    int lowestVal = int.MaxValue;
+                    foreach (string stat in statList)
+                    {
+                        if (statLine[stat] < lowestVal)
+                        {
+                            lowestStat = stat;
+                            lowestVal = statLine[stat];
+                        }
+                    }
+                    statLine[lowestStat] += statDifference;
+                }
+                else
+                {
+                    string highestStat = "";
+                    int highestVal = int.MinValue;
+                    foreach (string stat in statList)
+                    {
+                        if (statLine[stat] > highestVal)
+                        {
+                            highestStat = stat;
+                            highestVal = statLine[stat];
+                        }
+                    }
+                    statLine[highestStat] += statDifference;
+                }
+                //Now, we should have an exact stat total!
+                //Also, no need to really worry about splitting +2, as statistically the lowest number will be lower then everything else by more than 2.
+            }
+        }
 
 
         //TYPE
@@ -102,6 +173,16 @@ public class MonsterGenerator : MonoBehaviour
         {
             resultDisplay.text += stat +": "+ statLine[stat].ToString() + "\n";
         }
+
+        int[] statsArray;
+
+        //RETURN RESULTS
+        monsterInfo myMonster = new monsterInfo
+        {
+            typing = myTypes,
+            stats = statLine
+        };
+        return myMonster;
     }
 
     //Random float val (0 to 1) based on a bell curve
@@ -158,4 +239,32 @@ public class MonsterGenerator : MonoBehaviour
             statTotalInput.text = statTotal.ToString();
         }
     }
+
+    public void generateAndSave()
+    {
+        monsterInfo myNewMonster = GenerateMonster();
+        saveMonsterToJson(myNewMonster);
+    }
+
+    //Json code based on www.youtube.com/watch?v=VR0mIs80Gys , ty to them!
+    void saveMonsterToJson(monsterInfo myMonster, string monsterName = "myMonster")
+    {
+        //string myJsonInfo = JsonUtility.ToJson(myMonster);
+        string mystring = "blauhahsdu";
+        string myJsonInfo = JsonUtility.ToJson(myMonster.stats);
+        Debug.Log("Attempting save...");
+        print(myJsonInfo);
+        File.WriteAllText(Application.dataPath + "/" + monsterName + ".txt",myJsonInfo);
+        Debug.Log("Saved! Probably");
+    }
+
+    //monsterInfo loadMonsterToJson(string monsterName = "myMonster")
+    //{
+    //    string myJsonInfo = JsonUtility.ToJson("tester");//myMonster);
+    //    Debug.Log("Attempting save...");
+    //    File.WriteAllText(Application.dataPath + "/" + monsterName + ".txt", myJsonInfo);
+    //    Debug.Log("Saved! Probably");
+
+    //    return;
+    //}
 }
