@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
-using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
@@ -45,9 +44,8 @@ public class MonsterGenerator : MonoBehaviour
         //    GameObject myTester = Instantiate(tester);
         //    myTester.transform.position = new Vector2(myRand,value) * 4;
         //}
-        File.WriteAllText(Application.dataPath + "/bruh.txt", "huh?");
         monsterInfo myNewMonster = GenerateMonster();
-        saveMonsterToJson(myNewMonster, "HelloMonster");
+        saveMonsterToJson(myNewMonster);
     }
 
     // Update is called once per frame
@@ -174,13 +172,23 @@ public class MonsterGenerator : MonoBehaviour
             resultDisplay.text += stat +": "+ statLine[stat].ToString() + "\n";
         }
 
-        int[] statsArray;
+
+
 
         //RETURN RESULTS
+
+        //Convert stats dictionary into an array
+        //(JSON can't use dictionaries... so we use an array instead!)
+        int[] statsArray = new int[6];
+        for(int i = 0; i < statList.Length; i++)
+        {
+            statsArray[i] = statLine[statList[i]];
+        }
+        //Form it into a class to return!
         monsterInfo myMonster = new monsterInfo
         {
             typing = myTypes,
-            stats = statLine
+            stats = statsArray
         };
         return myMonster;
     }
@@ -251,10 +259,19 @@ public class MonsterGenerator : MonoBehaviour
     {
         //string myJsonInfo = JsonUtility.ToJson(myMonster);
         string mystring = "blauhahsdu";
-        string myJsonInfo = JsonUtility.ToJson(myMonster.stats);
+        string myJsonInfo = JsonUtility.ToJson(myMonster);
         Debug.Log("Attempting save...");
         print(myJsonInfo);
-        File.WriteAllText(Application.dataPath + "/" + monsterName + ".txt",myJsonInfo);
+        //Set file name and position
+        string filePosition = Application.dataPath + "/GeneratedMonsters/" + monsterName + ".txt";
+        //Check if there are duplicate names, modify the name until we get a new name
+        int attempts = 1;
+        while(File.Exists(filePosition))
+        {
+            filePosition = Application.dataPath + "/GeneratedMonsters/" + monsterName + " (" + attempts.ToString() + ").txt";
+            attempts++;
+        }
+        File.WriteAllText(filePosition, myJsonInfo);
         Debug.Log("Saved! Probably");
     }
 
