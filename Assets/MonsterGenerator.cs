@@ -35,23 +35,21 @@ public class MonsterGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //Tester code for checking if random code worked
-        //for (int i = 0; i < 50; i++)
-        //{
-        //    float myRand = UnityEngine.Random.value;
-        //    float value = randomHeavyCenter(myRand);
-        //    Debug.Log(value);
-        //    GameObject myTester = Instantiate(tester);
-        //    myTester.transform.position = new Vector2(myRand,value) * 4;
-        //}
-        monsterInfo myNewMonster = GenerateMonster();
-        saveMonsterToJson(myNewMonster);
+        // monsterInfo myNewMonster = GenerateMonster();
+        // saveMonsterToJson(myNewMonster);
     }
 
-    // Update is called once per frame
-    void Update()
+    //Helper to test random functions, and ensure it actually, works. Not needed anymore, saving anyway to be safe.
+    private void testRandomness()
     {
-        
+        for (int i = 0; i < 50; i++)
+        {
+            float myRand = UnityEngine.Random.value;
+            float value = randomHeavyCenter(myRand);
+            Debug.Log(value);
+            GameObject myTester = Instantiate(tester);
+            myTester.transform.position = new Vector2(myRand,value) * 4;
+        }
     }
 
     public monsterInfo GenerateMonster(bool exactTotal = true)
@@ -67,12 +65,10 @@ public class MonsterGenerator : MonoBehaviour
             int remainingStats = Mathf.FloorToInt(statAverage * 2 * randomHeavyCenter(UnityEngine.Random.value));
             foreach (string stat in statList)
             {
-                //Get random value from 0 to 2xthe average
+                //Get random value from 0 to 2x the average
                 //if 0, set to 1
                 statLine[stat] = Math.Max(1, Mathf.FloorToInt(statAverage * 2 * randomHeavyCenter(UnityEngine.Random.value)));
-                //Debug.Log(statLine[stat]);
             }
-            //Debug.Log(statLine);
         }
         else //Exact total
         {
@@ -160,17 +156,17 @@ public class MonsterGenerator : MonoBehaviour
             myTypes[0] = desiredType;
         }
 
-        //WRITE RESULTS
-        resultDisplay.text = "";
-        //types
-        resultDisplay.text += myTypes[0];
-        if (myTypes.Length > 1) resultDisplay.text += " / " + myTypes[1];
-        resultDisplay.text += "\n";
-        //stats
-        foreach (string stat in statLine.Keys)
-        {
-            resultDisplay.text += stat +": "+ statLine[stat].ToString() + "\n";
-        }
+        ////WRITE RESULTS
+        //resultDisplay.text = "";
+        ////types
+        //resultDisplay.text += myTypes[0];
+        //if (myTypes.Length > 1) resultDisplay.text += " / " + myTypes[1];
+        //resultDisplay.text += "\n";
+        ////stats
+        //foreach (string stat in statLine.Keys)
+        //{
+        //    resultDisplay.text += stat +": "+ statLine[stat].ToString() + "\n";
+        //}
 
 
 
@@ -179,7 +175,7 @@ public class MonsterGenerator : MonoBehaviour
 
         //Convert stats dictionary into an array
         //(JSON can't use dictionaries... so we use an array instead!)
-        int[] statsArray = new int[6];
+        int[] statsArray = new int[statList.Length];
         for(int i = 0; i < statList.Length; i++)
         {
             statsArray[i] = statLine[statList[i]];
@@ -227,26 +223,31 @@ public class MonsterGenerator : MonoBehaviour
         return Mathf.Sqrt(1 - Mathf.Pow(x - 1, 2));
     }
 
-    public void updateStatTotalFromText()
+    public void updateStatTotal(int input)
     {
-        Debug.Log("running updateStatTotal");
-        string newStatTotal = statTotalInput.text;
-        Debug.Log("-" + newStatTotal + "-");
-        //newStatTotal = "99999";
-        Debug.Log(newStatTotal);
-
-        int result;
-        if (Int32.TryParse(newStatTotal, out result))
-        {
-            Debug.Log("huh?");
-            statTotal = result;
-        }
-        else
-        {
-            Debug.Log(result);
-            statTotalInput.text = statTotal.ToString();
-        }
+        statTotal = input;
     }
+
+    //public void updateStatTotalFromText()
+    //{
+    //    Debug.Log("running updateStatTotal");
+    //    string newStatTotal = statTotalInput.text;
+    //    Debug.Log("-" + newStatTotal + "-");
+    //    //newStatTotal = "99999";
+    //    Debug.Log(newStatTotal);
+
+    //    int result;
+    //    if (Int32.TryParse(newStatTotal, out result))
+    //    {
+    //        Debug.Log("huh?");
+    //        statTotal = result;
+    //    }
+    //    else
+    //    {
+    //        Debug.Log(result);
+    //        statTotalInput.text = statTotal.ToString();
+    //    }
+    //}
 
     public void generateAndSave()
     {
@@ -255,10 +256,8 @@ public class MonsterGenerator : MonoBehaviour
     }
 
     //Json code based on www.youtube.com/watch?v=VR0mIs80Gys , ty to them!
-    void saveMonsterToJson(monsterInfo myMonster, string monsterName = "myMonster")
+    public void saveMonsterToJson(monsterInfo myMonster, string monsterName = "myMonster")
     {
-        //string myJsonInfo = JsonUtility.ToJson(myMonster);
-        string mystring = "blauhahsdu";
         string myJsonInfo = JsonUtility.ToJson(myMonster);
         Debug.Log("Attempting save...");
         print(myJsonInfo);
@@ -275,13 +274,20 @@ public class MonsterGenerator : MonoBehaviour
         Debug.Log("Saved! Probably");
     }
 
-    //monsterInfo loadMonsterToJson(string monsterName = "myMonster")
-    //{
-    //    string myJsonInfo = JsonUtility.ToJson("tester");//myMonster);
-    //    Debug.Log("Attempting save...");
-    //    File.WriteAllText(Application.dataPath + "/" + monsterName + ".txt", myJsonInfo);
-    //    Debug.Log("Saved! Probably");
-
-    //    return;
-    //}
+    public monsterInfo loadMonsterFromJson(string monsterName = "myMonster")
+    {
+        Debug.Log("Attempting load...");
+        if(File.Exists(Application.dataPath + "/GeneratedMonsters/" + monsterName + ".txt"))
+        {
+            string myJsonInfo = File.ReadAllText(Application.dataPath + "/GeneratedMonsters/" + monsterName + ".txt");
+            monsterInfo myNewMonster = JsonUtility.FromJson<monsterInfo>(myJsonInfo);
+            Debug.Log("Loaded! Probably");
+            return myNewMonster;
+        }
+        else
+        {
+            print("Load failed!");
+            return null;
+        }
+    }
 }
