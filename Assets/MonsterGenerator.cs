@@ -19,7 +19,7 @@ public class MonsterGenerator : MonoBehaviour
     [SerializeField] public string[] typeList = { "Fire", "Water", "Grass" };
 
     [Header("The corresponding weight of each type. \nIf a type's weight is not listed here, \nit will be set to 1.")]
-    [SerializeField] public float[] typeListWeight = { 1, 1, 1 };
+    [SerializeField] public int[] typeListWeight = { 1, 1, 1 };
     float totalWeight = 0;
 
     [SerializeField] public string[] statList = { "Health", "Attack", "Defense", "Special Attack", "Special Defense", "Speed" };
@@ -210,10 +210,18 @@ public class MonsterGenerator : MonoBehaviour
     //Done at start and mid-running to prevent errors from differences between the weight and type lists, as well as account for updates to the weights.
     void updateTypeWeightDetails()
     {
-        //editor adjustments
-        while (typeListWeight.Length < typeList.Length)
+        //editor adjustments, make the typeWeightList as long as the typeList
+        if (typeListWeight.Length < typeList.Length)
         {
-            typeListWeight.Append(1);
+            int[] newTypeListWeight = new int[typeList.Length];
+            for (int i = 0; i < typeList.Length; i++)
+            {
+                if (i < typeListWeight.Length)
+                    newTypeListWeight[i] = typeListWeight[i];
+                else
+                    newTypeListWeight[i] = 1;
+            }
+            typeListWeight = newTypeListWeight;
         }
         //Determine total weight
         //(we do this second because if the typeListWeight is shorter than the typeList, this would throw an error.)
