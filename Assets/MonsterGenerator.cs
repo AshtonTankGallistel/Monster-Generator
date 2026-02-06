@@ -8,14 +8,19 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using System.Linq;
 
 public class MonsterGenerator : MonoBehaviour
 {
     public int statTotal = 400;
-    public string desiredType = "None";
+    public string[] desiredType = {};
     public float dualTypeOdds = 0.5f;
 
     [SerializeField] public string[] typeList = { "Fire", "Water", "Grass" };
+
+    [Header("The corresponding weight of each type. \nIf a type's weight is not listed here, \nit will be set to 1.")]
+    [SerializeField] public float[] typeListWeight = { 1, 1, 1 };
+    float totalWeight = 0;
 
     [SerializeField] public string[] statList = { "Health", "Attack", "Defense", "Special Attack", "Special Defense", "Speed" };
 
@@ -35,8 +40,12 @@ public class MonsterGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // uncomment the below to test stuff!
         // monsterInfo myNewMonster = GenerateMonster();
         // saveMonsterToJson(myNewMonster);
+
+        //Below ran in order to prepare for generating monsters!
+        updateTypeWeightDetails();
     }
 
     //Helper to test random functions, and ensure it actually, works. Not needed anymore, saving anyway to be safe.
@@ -92,7 +101,7 @@ public class MonsterGenerator : MonoBehaviour
             }
             //This should result in a little over or under the exact total...
             //If no 0, this value is usually -1 or 1, rarely 2.
-            print(statTotal - currentTotalStats);
+            //print(statTotal - currentTotalStats);
             if(statTotal - currentTotalStats != 0)
             {
                 //In this case, find the lowest/highest value stat and add the value to it
@@ -132,29 +141,37 @@ public class MonsterGenerator : MonoBehaviour
 
 
         //TYPE
+        updateTypeWeightDetails();
         string[] myTypes;
-        if(UnityEngine.Random.value <= dualTypeOdds) //monster becomes dual typed
+        if (desiredType.Length > 0)//User wishes to select a specific type
         {
-            int typeID1 = UnityEngine.Random.Range(0, typeList.Length);
-            int typeID2 = UnityEngine.Random.Range(0, typeList.Length);
-            //check for and prevent dual-same-type
-            if (typeID1 == typeID2)
+            if (desiredType.Length > 1) //User wants a specific set of 2 types!
+                myTypes = new string[2] { desiredType[0], desiredType[1]};
+            else //User wants the first type to be a specific type!
             {
-                //ok this is kinda wacky but also technically the most efficient way to do so without spending a bunch of effort/memory popping from a list
-                //This effectively cycles ahead in the list (and looping if it goes beyond) from the previous point, up to right before it
-                //ie 3 out of 12 goes from 4 to 2 (4 to 12, plus 0 to 2)
-                Debug.Log(typeID2);
-                typeID2 = (typeID2 + UnityEngine.Random.Range(1, typeList.Length - 1)) % typeList.Length;
-                Debug.Log(typeID2);
+                if (UnityEngine.Random.value <= dualTypeOdds) //randomly hit dual type!
+                {
+                    int randomSecondTypeID = getRandomWeightedType(); //get a random type
+                    if (desiredType[0] == typeList[randomSecondTypeID]) //if type already is desired, get a unique type!
+                    {
+                        randomSecondTypeID = getRandomWeightedType(randomSecondTypeID);
+                    }
+                    myTypes = new string[2] { desiredType[0], typeList[randomSecondTypeID] };
+                }
+                else
+                {
+                    myTypes = new string[1] { desiredType[0]};
+                }
             }
+        }
+        else if(UnityEngine.Random.value <= dualTypeOdds) //monster becomes dual typed
+        {
+            int typeID1 = getRandomWeightedType();
+            int typeID2 = getRandomWeightedType(typeID1);
             myTypes = new string[2] { typeList[typeID1], typeList[typeID2] };
         }
         else
-            myTypes = new string[1] { typeList[UnityEngine.Random.Range(0, typeList.Length)] };
-        if (desiredType != "None")
-        {
-            myTypes[0] = desiredType;
-        }
+            myTypes = new string[1] { typeList[getRandomWeightedType()] };
 
         ////WRITE RESULTS
         //resultDisplay.text = "";
@@ -187,6 +204,55 @@ public class MonsterGenerator : MonoBehaviour
             stats = statsArray
         };
         return myMonster;
+    }
+
+    //Helper function that updates the weights for types.
+    //Done at start and mid-running to prevent errors from differences between the weight and type lists, as well as account for updates to the weights.
+    void updateTypeWeightDetails()
+    {
+        //editor adjustments
+        while (typeListWeight.Length < typeList.Length)
+        {
+            typeListWeight.Append(1);
+        }
+        //Determine total weight
+        //(we do this second because if the typeListWeight is shorter than the typeList, this would throw an error.)
+        //(and we check it via typeList because if it's shorter, we want to only consider the relevant types.)
+        totalWeight = 0;
+        for (int i = 0; i < typeList.Length; i++)
+            totalWeight += typeListWeight[i];
+    }
+
+    //Helper function
+    //Gets a random typeID based on their respective weights
+    int getRandomWeightedType(int skippedTypeID = -1)
+    {
+        float currentResult;
+        if (skippedTypeID == -1)
+        {
+            currentResult = UnityEngine.Random.Range(0, totalWeight);
+        }
+        else
+        {
+            print("skipping a type!");
+            currentResult = UnityEngine.Random.Range(0, totalWeight - typeListWeight[skippedTypeID]);
+        }
+        print(currentResult);
+        for(int i = 0; i < typeList.Length; i++)
+        {
+            if(skippedTypeID == i)
+            {
+                continue;
+            }
+            if (currentResult < typeListWeight[i])
+            {
+                return i;
+            }
+            currentResult -= typeListWeight[i];
+        }
+        print("uh oh");
+        print(currentResult);
+        return -1;
     }
 
     //Random float val (0 to 1) based on a bell curve

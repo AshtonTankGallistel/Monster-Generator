@@ -3,11 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 using TMPro;
 
 public class GeneratorExampleSceneManager : MonoBehaviour
 {
+    public bool getExactStatTotal = true;
+
     [SerializeField] MonsterGenerator myGenerator;
     public MonsterGenerator.monsterInfo currentMonster;
     public string monsterFileName = "MyMonster";
@@ -17,6 +18,8 @@ public class GeneratorExampleSceneManager : MonoBehaviour
     [SerializeField] TMP_InputField statTotalInput;
 
     [SerializeField] TMP_InputField fileNameInput;
+
+    [SerializeField] Toggle exactStatTotalToggle;
 
     // Start is called before the first frame update
     void Start()
@@ -48,7 +51,7 @@ public class GeneratorExampleSceneManager : MonoBehaviour
 
     public void makeNewCurrentMonster()
     {
-        currentMonster = myGenerator.GenerateMonster();
+        currentMonster = myGenerator.GenerateMonster(getExactStatTotal);
         writeMyMonster(currentMonster);
     }
 
@@ -97,5 +100,10 @@ public class GeneratorExampleSceneManager : MonoBehaviour
         Debug.Log("running updateFileNameFromTextInput");
         monsterFileName = fileNameInput.text;
         Debug.Log(monsterFileName);
+    }
+
+    public void setGetExactStatTotal()
+    {
+        getExactStatTotal = exactStatTotalToggle.IsActive();
     }
 }
