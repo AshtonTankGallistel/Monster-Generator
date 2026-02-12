@@ -7,7 +7,7 @@ using UnityEngine;
 public class MoveListGenerator : MonoBehaviour
 {
     //ASHTON GALLISTEL, THESE ARE YOUR NEXT STEPS: Implement attack name generator from key words
-    //(each name is 2 words, create 2 lists of each keyword list to combo (1 list is first word, 2 is 2nd), preventing dupes by popping a random word from one of them for each name)
+    //DONE(each name is 2 words, create 2 lists of each keyword list to combo (1 list is first word, 2 is 2nd), preventing dupes by popping a random word from one of them for each name)
     //Then, implement a system to randomly pull moves for the mons
     //Then, implement a GUI!
 
@@ -77,12 +77,31 @@ public class MoveListGenerator : MonoBehaviour
             //setup new typeListOfMoves
             movesMasterList[typeList[i]] = new typeListOfMoves();
             movesMasterList[typeList[i]].typeName = typeList[i];
+            //Come up with names to use for the moves
+            string[] wordArray1 = typeKeyWords[i].Split(",");
+            List<string> finalNameList = new List<string>();
+            foreach(string word1 in wordArray1)
+            {
+                foreach (string word2 in wordArray1)
+                {
+                    finalNameList.Add(word1 + " " + word2);
+                }
+            }
+            //If the user wants more move names then it's possible to create, add 'bonus' names
+            while(finalNameList.Count < numOfMovesPerType)
+            {
+                //adds 'Bonus TypeName #_' to the list.
+                //Technically goes from highest to 1 rather than 1 to highest... but same result either way!
+                finalNameList.Add("Bonus " + typeList[i] + " #" + (numOfMovesPerType - finalNameList.Count).ToString());
+            }
             //Fill it out!
             moveInfo[] moveList;
             moveList = new moveInfo[numOfMovesPerType];
             for (int x = 0; x < moveList.Length; x++)
             {
-                moveList[x] = new moveInfo(typeList[i] + " move num " + x.ToString(), typeList[i], (x+1) * 100 / moveList.Length);
+                int moveNamePos = UnityEngine.Random.Range(0, finalNameList.Count); //get name position
+                moveList[x] = new moveInfo(finalNameList[moveNamePos], typeList[i], (x+1) * 100 / moveList.Length);
+                finalNameList.RemoveAt(moveNamePos); //remove name as option from list to prevent dupe names
             }
             movesMasterList[typeList[i]].myMoves = moveList;
             //add it to the final json array!
@@ -107,5 +126,21 @@ public class MoveListGenerator : MonoBehaviour
         Debug.Log("Saved! Probably");
     }
 
-    //void addMove()
+
+    static public completeListOfMoves loadMovesFromJson(string moveFileName = "TestList")
+    {
+        Debug.Log("Attempting load...");
+        if (File.Exists(Application.dataPath + "/Move Lists/" + moveFileName + ".txt"))
+        {
+            string myJsonInfo = File.ReadAllText(Application.dataPath + "/Move Lists/" + moveFileName + ".txt");
+            completeListOfMoves myNewList = JsonUtility.FromJson<completeListOfMoves>(myJsonInfo);
+            Debug.Log("Loaded! Probably");
+            return myNewList;
+        }
+        else
+        {
+            print("Load failed!");
+            return null;
+        }
+    }
 }

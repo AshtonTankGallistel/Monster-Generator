@@ -1,0 +1,1 @@
+{"typing":["Fire","Water"],"statNames":["Health","Attack","Defense","Special Attack","Special Defense","Speed"],"stats":[64,61,79,70,27,99],"moves":[{"moveName":"Blast Blast","typing":"Fire","power":40},{"moveName":"Fiery Flame","typing":"Fire","power":20},{"moveName":"Blast Burst","typing":"Fire","power":80},{"moveName":"Blast Burst","typing":"Fire","power":80}]}

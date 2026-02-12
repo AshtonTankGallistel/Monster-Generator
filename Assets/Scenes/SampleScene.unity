@@ -1801,10 +1801,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   typeList:
+  - None
   - Fire
   - Water
   - Grass
-  - None
+  typeKeyWords:
+  - Bite,Scratch,Chomp,Punch,Kick,Slap
+  - Fiery,Flame,Blast,Burst,Heat
+  - Bubble,Splash,Wet,Wash,Rain
+  - Grove,Leaf,Root,Tangle,Branch
   numOfMovesPerType: 5
 --- !u!4 &408093128
 Transform:

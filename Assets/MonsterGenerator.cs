@@ -16,6 +16,8 @@ public class MonsterGenerator : MonoBehaviour
     public string[] desiredType = {};
     public float dualTypeOdds = 0.5f;
 
+    //TYPE HANDLING
+
     [SerializeField] public string[] typeList = { "Fire", "Water", "Grass" };
 
     [Header("The corresponding weight of each type. \nIf a type's weight is not listed here, \nit will be set to 1.")]
@@ -24,17 +26,36 @@ public class MonsterGenerator : MonoBehaviour
 
     [SerializeField] public string[] statList = { "Health", "Attack", "Defense", "Special Attack", "Special Defense", "Speed" };
 
+    //MOVE HANDLING
+
+    [SerializeField] public int numberOfMoves = 4;
+
+    // Common Move Types are types whose moves are common across all mons, regardless of base type. If chosen, a random type from this list will be pulled.
+    [SerializeField] public string[] commonMoveTypes = { "None" };
+
+    // The odds of getting a common type move instead of a matching type move. (If the type matches, this effectively does nothing.)
+    [SerializeField] public float commonMoveOdds = 0.3f;
+
+    // The odds of getting a coverage (ie non-common nor matching) type move. Additive with the previous value. (ie, 0.3 common + 0.1 coverage = 0.4 chance of a non-matching type move!)
+    [SerializeField] public float coverageMoveOdds = 0.1f;
+
     [SerializeField] GameObject tester;
-
-    [SerializeField] TextMeshProUGUI resultDisplay;
-
-    [SerializeField] TMP_InputField statTotalInput;
 
     public class monsterInfo
     {
         public string[] typing;
+        public string[] statNames;
         public int[] stats;
-        //public Dictionary<string, int> stats;
+        public MoveListGenerator.moveInfo[] moves; //We record all info about the moves instead of pointers. THIS IS INNEFICIENT, but allows them to be used without the moveList being saved.
+    }
+
+    //An unsused alternate class, theoretically lighter than the regular option, but relying heavily on info being saved to external files that must be accessed.
+    //Debated going with this, but relies too heavily on constantly accessing other scripts and storing info seperately. Perhaps if I had more time? idk
+    public class monsterInfoLight
+    {
+        public string[] typing;
+        public int[] stats;
+        //public MoveListGenerator.moveInfo[] moves; //We record all info about the moves instead of pointers. THIS IS INNEFICIENT, but allows them to be used without the moveList being saved.
         public int[] moveIDs;
         public string moveFileName;
     }
@@ -176,6 +197,22 @@ public class MonsterGenerator : MonoBehaviour
         else
             myTypes = new string[1] { typeList[getRandomWeightedType()] };
 
+
+        //MOVES
+        //make move dictionary to pull from
+        MoveListGenerator.completeListOfMoves myMoveList = MoveListGenerator.loadMovesFromJson();
+        Dictionary<string, MoveListGenerator.moveInfo[]> myMoveDictionary = new Dictionary<string, MoveListGenerator.moveInfo[]>();
+        foreach (MoveListGenerator.typeListOfMoves moveTypeList in myMoveList.moveArrays)
+            myMoveDictionary[moveTypeList.typeName] = moveTypeList.myMoves;
+        //actually take the dictionary info and put it into the mon
+        MoveListGenerator.moveInfo[] myMonsMoves = new MoveListGenerator.moveInfo[numberOfMoves];
+        for (int i = 0; i < numberOfMoves; i++)
+        {
+            //just doing matching type moves for now, add more later
+            myMonsMoves[i] = myMoveDictionary[myTypes[0]][UnityEngine.Random.Range(0, myMoveDictionary[myTypes[0]].Length)];
+        }
+
+
         ////WRITE RESULTS
         //resultDisplay.text = "";
         ////types
@@ -196,15 +233,19 @@ public class MonsterGenerator : MonoBehaviour
         //Convert stats dictionary into an array
         //(JSON can't use dictionaries... so we use an array instead!)
         int[] statsArray = new int[statList.Length];
+        string[] statsArrayNames = new string[statList.Length];
         for(int i = 0; i < statList.Length; i++)
         {
+            statsArrayNames[i] = statList[i];
             statsArray[i] = statLine[statList[i]];
         }
         //Form it into a class to return!
         monsterInfo myMonster = new monsterInfo
         {
             typing = myTypes,
-            stats = statsArray
+            statNames = statsArrayNames,
+            stats = statsArray,
+            moves = myMonsMoves
         };
         return myMonster;
     }
