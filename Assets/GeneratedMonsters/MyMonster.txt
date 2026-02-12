@@ -1,0 +1,1 @@
+{"typing":["Grass"],"stats":[66,80,53,40,81,80],"moveIDs":[],"moveFileName":""}

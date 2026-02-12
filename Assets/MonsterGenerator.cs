@@ -19,7 +19,7 @@ public class MonsterGenerator : MonoBehaviour
     [SerializeField] public string[] typeList = { "Fire", "Water", "Grass" };
 
     [Header("The corresponding weight of each type. \nIf a type's weight is not listed here, \nit will be set to 1.")]
-    [SerializeField] public int[] typeListWeight = { 1, 1, 1 };
+    [SerializeField] public float[] typeListWeight = { 1, 1, 1 };
     float totalWeight = 0;
 
     [SerializeField] public string[] statList = { "Health", "Attack", "Defense", "Special Attack", "Special Defense", "Speed" };
@@ -35,7 +35,10 @@ public class MonsterGenerator : MonoBehaviour
         public string[] typing;
         public int[] stats;
         //public Dictionary<string, int> stats;
+        public int[] moveIDs;
+        public string moveFileName;
     }
+
 
     // Start is called before the first frame update
     void Start()
@@ -213,7 +216,7 @@ public class MonsterGenerator : MonoBehaviour
         //editor adjustments, make the typeWeightList as long as the typeList
         if (typeListWeight.Length < typeList.Length)
         {
-            int[] newTypeListWeight = new int[typeList.Length];
+            float[] newTypeListWeight = new float[typeList.Length];
             for (int i = 0; i < typeList.Length; i++)
             {
                 if (i < typeListWeight.Length)
