@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using Unity.VisualScripting.Antlr3.Runtime.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class GeneratorExampleSceneManager : MonoBehaviour
 {
@@ -20,6 +21,8 @@ public class GeneratorExampleSceneManager : MonoBehaviour
     [SerializeField] TMP_InputField fileNameInput;
 
     [SerializeField] Toggle exactStatTotalToggle;
+
+    public int batchGenerationCount = 100;
 
     // Start is called before the first frame update
     void Start()
@@ -85,12 +88,18 @@ public class GeneratorExampleSceneManager : MonoBehaviour
         int result;
         if (Int32.TryParse(newStatTotal, out result))
         {
-            Debug.Log("huh?");
+
+            if (result < 2 * myGenerator.statList.Length)
+            {
+                result = 2 * myGenerator.statList.Length;
+                Debug.Log("[MonsterGenExampleManager] StatTotal must be 2 times the number of stats or higher! Lower values are not supported.");
+                statTotalInput.text = result.ToString();
+            }
+
             myGenerator.updateStatTotal(result);
         }
         else
         {
-            Debug.Log(result);
             statTotalInput.text = myGenerator.statTotal.ToString();
         }
     }
@@ -105,5 +114,15 @@ public class GeneratorExampleSceneManager : MonoBehaviour
     public void setGetExactStatTotal()
     {
         getExactStatTotal = exactStatTotalToggle.IsActive();
+    }
+
+    public void batchGenerateALOTofMonsters()
+    {
+        MonsterGenerator.monsterInfo tempMonster;
+        for (int i = 0; i < batchGenerationCount; i++)
+        {
+            tempMonster = myGenerator.GenerateMonster(getExactStatTotal);
+            myGenerator.saveMonsterToJson(tempMonster, "MyMonster " + (i+1).ToString());
+        }
     }
 }

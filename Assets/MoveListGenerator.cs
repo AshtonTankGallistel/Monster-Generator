@@ -53,7 +53,7 @@ public class MoveListGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        generateList();
+        //generateList();
     }
 
     // Update is called once per frame

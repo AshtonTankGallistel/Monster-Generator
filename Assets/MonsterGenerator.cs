@@ -90,6 +90,11 @@ public class MonsterGenerator : MonoBehaviour
         //STATS
         Dictionary<string, int> statLine = new Dictionary<string, int>();
 
+        if(statTotal < 2 * statList.Length)
+        {
+            statTotal = 2 * statList.Length;
+            Debug.Log("[MonsterGen] StatTotal must be 2 times the number of stats or higher! Lower values are not supported.");
+        }
 
         if (!exactTotal) //Not exact total
         {
@@ -204,12 +209,49 @@ public class MonsterGenerator : MonoBehaviour
         Dictionary<string, MoveListGenerator.moveInfo[]> myMoveDictionary = new Dictionary<string, MoveListGenerator.moveInfo[]>();
         foreach (MoveListGenerator.typeListOfMoves moveTypeList in myMoveList.moveArrays)
             myMoveDictionary[moveTypeList.typeName] = moveTypeList.myMoves;
+        //make array to know what types you can pull from for coverage
+        string[] coverageTypes = new string[typeList.Length - myTypes.Length];
+        if (coverageMoveOdds > 0) //only bother filling if user is using this mechanic
+        {
+            int counter = 0;
+            foreach (string uniqueType in typeList)
+            {
+                if(!Array.Exists(myTypes, element => element == uniqueType)) //if type not in monster's typing, add it to list
+                {
+                    coverageTypes[counter] = uniqueType;
+                    counter++;
+                }
+            }
+        }
         //actually take the dictionary info and put it into the mon
         MoveListGenerator.moveInfo[] myMonsMoves = new MoveListGenerator.moveInfo[numberOfMoves];
         for (int i = 0; i < numberOfMoves; i++)
         {
             //just doing matching type moves for now, add more later
-            myMonsMoves[i] = myMoveDictionary[myTypes[0]][UnityEngine.Random.Range(0, myMoveDictionary[myTypes[0]].Length)];
+            //create a unique list of options with no duplicates
+            //IEnumerable<MoveListGenerator.moveInfo> validMoves = myMoveDictionary[myTypes[0]].Except(myMonsMoves); //DOES NOT WORK
+            float moveChoice = UnityEngine.Random.value;
+            if(moveChoice < commonMoveOdds) //check if you pull a common type move
+            {
+                string myRandomType = commonMoveTypes[UnityEngine.Random.Range(0, commonMoveTypes.Length)];
+                myMonsMoves[i] = myMoveDictionary[myRandomType][UnityEngine.Random.Range(0, myMoveDictionary[myRandomType].Length)];
+            }
+            else
+            {
+                moveChoice -= commonMoveOdds;
+                if (moveChoice < coverageMoveOdds) //check if you pull a coverage move
+                {
+                    string myRandomType = coverageTypes[UnityEngine.Random.Range(0, coverageTypes.Length)];
+                    myMonsMoves[i] = myMoveDictionary[myRandomType][UnityEngine.Random.Range(0, myMoveDictionary[myRandomType].Length)];
+                }
+                else
+                {
+                    //pulled a regular type-match move
+                    string myRandomType = myTypes[UnityEngine.Random.Range(0, myTypes.Length)];
+                    myMonsMoves[i] = myMoveDictionary[myRandomType][UnityEngine.Random.Range(0, myMoveDictionary[myRandomType].Length)];
+                }
+            }
+            
         }
 
 
