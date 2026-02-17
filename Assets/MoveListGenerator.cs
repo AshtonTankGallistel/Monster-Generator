@@ -24,13 +24,15 @@ public class MoveListGenerator : MonoBehaviour
     {
         public string moveName;
         public string typing;
-        public int power;
+        public float power;
+        public string[] tags; // Extra info about the move. What stat does it use, what buffs/debuffs, etc.
 
-        public moveInfo(string myName, string myTyping, int myPower)
+        public moveInfo(string myName, string myTyping, float myPower, string[] myTags)
         {
             moveName = myName;
             typing = myTyping;
             power = myPower;
+            tags = myTags;
         }
     }
 
@@ -50,22 +52,46 @@ public class MoveListGenerator : MonoBehaviour
 
     Dictionary<string, typeListOfMoves> movesMasterList = new Dictionary<string, typeListOfMoves>();
 
+    [Header("Move Details")]
+    [SerializeField] public float movePowerMin = 20;
+    [SerializeField] public float movePowerMax = 100;
+    [SerializeField] public float movePowerStep = 10; //Difference between each amount of power (steps of 5 => 20, 25, 30)
+
+    //At least one of these tags will be on every move.
+    [SerializeField] public string guaranteedTags = "Physical,Special";
+    //Tags that will be randomly applied
+    [SerializeField] public string BonusTags = "BuffAtk,BuffDef,BuffSpe";
+
+
     // Start is called before the first frame update
     void Start()
     {
-        //generateList();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        generateList();
     }
 
     public void generateList()
     {
-        //later on, addiitonal info will be ran here to determine what moves get made
-        //For now, lets cheat!
+        //Calculating all possible move powers ahead of time, to save calculation time later
+        //setup array length
+        float[] possibleMovePowers = null;
+        if (movePowerStep != 0) // no dividing by 0!
+        {
+            int pmpLength = 1 + Mathf.CeilToInt((movePowerMax - movePowerMin) / movePowerStep);
+            if (pmpLength < 2) pmpLength = 2;
+            possibleMovePowers = new float[pmpLength];
+        }
+        else
+        {
+            if(movePowerMax != movePowerMin) possibleMovePowers = new float[2];
+            else possibleMovePowers = new float[1];
+        }
+        //fill array
+        possibleMovePowers[0] = movePowerMin;
+        for(int i = 1; i < possibleMovePowers.Length - 1; i++)
+        {
+            possibleMovePowers[i] = movePowerMin + (movePowerStep * i);
+        }
+        possibleMovePowers[possibleMovePowers.Length - 1] = movePowerMax;
 
         //We can't put dictionaries into the final json, so we make an array to use instead
         //All the same info is kept, just easier to setup this way. I think.
@@ -100,7 +126,11 @@ public class MoveListGenerator : MonoBehaviour
             for (int x = 0; x < moveList.Length; x++)
             {
                 int moveNamePos = UnityEngine.Random.Range(0, finalNameList.Count); //get name position
-                moveList[x] = new moveInfo(finalNameList[moveNamePos], typeList[i], (x+1) * 100 / moveList.Length);
+                //MOVE POWER HANDLING
+                int movePowerPos = UnityEngine.Random.Range(0, possibleMovePowers.Length); //get name position
+                //MOVE TAG HANDLING
+                //TODO
+                moveList[x] = new moveInfo(finalNameList[moveNamePos], typeList[i], possibleMovePowers[movePowerPos], new string[0]); //TODO: IMPLEMENT MORE TAG STUFF
                 finalNameList.RemoveAt(moveNamePos); //remove name as option from list to prevent dupe names
             }
             movesMasterList[typeList[i]].myMoves = moveList;

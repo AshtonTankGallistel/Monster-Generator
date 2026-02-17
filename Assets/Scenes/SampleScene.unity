@@ -1812,6 +1812,11 @@ MonoBehaviour:
   - Bubble,Splash,Wet,Wash,Rain
   - Grove,Leaf,Root,Tangle,Branch
   numOfMovesPerType: 5
+  movePowerMin: 10
+  movePowerMax: 21
+  movePowerStep: 5
+  guaranteedTags: Physical,Special
+  BonusTags: BuffAtk,BuffDef,BuffSpe
 --- !u!4 &408093128
 Transform:
   m_ObjectHideFlags: 0
