@@ -57,6 +57,7 @@ public class MoveListGenerator : MonoBehaviour
     [SerializeField] public float movePowerMax = 100;
     [SerializeField] public float movePowerStep = 10; //Difference between each amount of power (steps of 5 => 20, 25, 30)
 
+    [SerializeField] public int numOfTags = 2;
     //At least one of these tags will be on every move.
     [SerializeField] public string guaranteedTags = "Physical,Special";
     //Tags that will be randomly applied
@@ -93,6 +94,14 @@ public class MoveListGenerator : MonoBehaviour
         }
         possibleMovePowers[possibleMovePowers.Length - 1] = movePowerMax;
 
+        //Setup true tag arrays
+        string[] guaranteedTagsArray = guaranteedTags.Split(",");
+        if (guaranteedTagsArray[0] == "" && guaranteedTagsArray.Length == 1) guaranteedTagsArray = new string[0];
+        string[] BonusTagsArray = BonusTags.Split(",");
+        if (BonusTagsArray[0] == "" && BonusTagsArray.Length == 1) BonusTagsArray = new string[0];
+        foreach (string tag in guaranteedTagsArray) print(tag);
+        foreach (string tag in BonusTagsArray) print(tag);
+
         //We can't put dictionaries into the final json, so we make an array to use instead
         //All the same info is kept, just easier to setup this way. I think.
         completeListOfMoves finalMoveArray = new completeListOfMoves();
@@ -125,12 +134,37 @@ public class MoveListGenerator : MonoBehaviour
             moveList = new moveInfo[numOfMovesPerType];
             for (int x = 0; x < moveList.Length; x++)
             {
+                //MOVE NAME HANDLING
                 int moveNamePos = UnityEngine.Random.Range(0, finalNameList.Count); //get name position
                 //MOVE POWER HANDLING
                 int movePowerPos = UnityEngine.Random.Range(0, possibleMovePowers.Length); //get name position
                 //MOVE TAG HANDLING
-                //TODO
-                moveList[x] = new moveInfo(finalNameList[moveNamePos], typeList[i], possibleMovePowers[movePowerPos], new string[0]); //TODO: IMPLEMENT MORE TAG STUFF
+                string[] moveTags;
+                //determine num of tags before setting them, to be safe
+                if(guaranteedTagsArray.Length > 0 && BonusTagsArray.Length > 0)
+                    moveTags = new string[numOfTags];
+                else
+                    moveTags = new string[numOfTags];
+                //TODO: EXPAND THIS TO HANDLE EDGE CASES OF ARRAY LENGTHS
+                //First spot becomes a guaranteed tag if any exist. All other spots become a random tag
+                if (numOfTags >= 1)
+                {
+                    if (guaranteedTagsArray.Length > 0)
+                        moveTags[0] = guaranteedTagsArray[UnityEngine.Random.Range(0, guaranteedTagsArray.Length)];
+                    else if (BonusTagsArray.Length > 0)
+                        moveTags[0] = BonusTagsArray[UnityEngine.Random.Range(0, BonusTagsArray.Length)];
+                    //Only add tags if there are tags to add
+                    if (BonusTagsArray.Length > 0)
+                    {
+                        //can get duplicate tags. I'm ok with this.
+                        for (int tagNum = 1; tagNum < numOfTags; tagNum++)
+                        {
+                            moveTags[tagNum] = BonusTagsArray[UnityEngine.Random.Range(0, BonusTagsArray.Length)];
+                        }
+                    }
+                }
+                //BUILD THE MOVE
+                moveList[x] = new moveInfo(finalNameList[moveNamePos], typeList[i], possibleMovePowers[movePowerPos], moveTags); //TODO: IMPLEMENT MORE TAG STUFF
                 finalNameList.RemoveAt(moveNamePos); //remove name as option from list to prevent dupe names
             }
             movesMasterList[typeList[i]].myMoves = moveList;
